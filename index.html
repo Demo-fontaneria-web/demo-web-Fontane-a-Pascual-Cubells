@@ -1043,13 +1043,26 @@ footer ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
   var tiras = Array.prototype.slice.call(document.querySelectorAll(".tira"));
   var galI = 0, galAuto = null;
 
+  // La miniatura activa se centra moviendo SOLO la tira de miniaturas.
+  // Antes se hacía con scrollIntoView, que además arrastraba el scroll de
+  // la página entera: al abrir la web bajaba sola hasta la galería y el
+  // visitante no llegaba a ver la portada.
+  function centraTira(){
+    var caja = document.getElementById("tiras"), t = tiras[galI];
+    if(!caja || !t) return;
+    if(caja.scrollWidth <= caja.clientWidth) return;
+    var rt = t.getBoundingClientRect(), rc = caja.getBoundingClientRect();
+    var destino = caja.scrollLeft + (rt.left - rc.left) - (rc.width - rt.width) / 2;
+    destino = Math.max(0, Math.min(destino, caja.scrollWidth - caja.clientWidth));
+    if(caja.scrollTo) caja.scrollTo({left: destino, behavior: reduce ? "auto" : "smooth"});
+    else caja.scrollLeft = destino;
+  }
+
   function galVaA(i){
     galI = (i + fotos.length) % fotos.length;
     fotos.forEach(function(f, j){ f.classList.toggle("viva", j === galI); });
-    tiras.forEach(function(t, j){
-      t.classList.toggle("on", j === galI);
-      if(j === galI && t.scrollIntoView) t.scrollIntoView({block:"nearest", inline:"nearest", behavior: reduce ? "auto" : "smooth"});
-    });
+    tiras.forEach(function(t, j){ t.classList.toggle("on", j === galI); });
+    centraTira();
     document.getElementById("galPie").textContent = PIES[galI] || "";
     document.getElementById("galN").textContent = galI + 1;
   }
